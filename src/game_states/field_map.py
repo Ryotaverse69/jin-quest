@@ -4,10 +4,12 @@ JID×QUEST - フィールドマップ画面
 
 import pygame
 import random
+import json
 from config import *
 from src.entities.player import Player
 from src.utils.tilemap import TileMap
 from src.battle_system.damage_calc import get_enemy_for_area
+from src.ui.dialogue_box import DialogueBox
 
 
 class FieldMapState:
@@ -43,6 +45,19 @@ class FieldMapState:
         self.encounter_enabled = True  # エンカウント有効フラグ
         self.area_level = 2  # 現在エリアのレベル（2F営業部）
 
+        # 会話システム
+        self.dialogue_box = DialogueBox()
+        self.load_dialogue_data()
+
+    def load_dialogue_data(self):
+        """会話データを読み込み"""
+        try:
+            with open('data/dialogues/npcs.json', 'r', encoding='utf-8') as f:
+                self.dialogue_data = json.load(f)
+        except FileNotFoundError:
+            print("警告: 会話データが見つかりません")
+            self.dialogue_data = {}
+
     def handle_events(self, events):
         """
         イベント処理
@@ -50,6 +65,11 @@ class FieldMapState:
         Args:
             events: pygameイベントリスト
         """
+        # 会話中は会話ウィンドウに入力を渡す
+        if self.dialogue_box.is_active:
+            self.dialogue_box.handle_input(events)
+            return
+
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
@@ -82,8 +102,8 @@ class FieldMapState:
         # NPCチェック
         npc = self.tilemap.get_npc_at(target_x, target_y)
         if npc:
-            print(f"{npc['name']}に話しかけた: {npc.get('dialogue', '...')}")
-            # TODO: 会話ウィンドウを表示
+            self.talk_to_npc(npc)
+            return
 
         # イベントチェック
         event = self.tilemap.get_event_at(target_x, target_y)
@@ -91,8 +111,46 @@ class FieldMapState:
             print(f"イベント発生: {event}")
             # TODO: イベント処理
 
+    def talk_to_npc(self, npc):
+        """
+        NPCと会話
+
+        Args:
+            npc: NPCデータ
+        """
+        npc_name = npc['name']
+
+        # 会話データから適切なメッセージを取得
+        if npc_name in self.dialogue_data:
+            npc_dialogues = self.dialogue_data[npc_name]
+
+            # レベルに応じたメッセージを選択
+            if f"レベル{self.player.level}" in npc_dialogues:
+                messages = npc_dialogues[f"レベル{self.player.level}"]
+            elif "通常" in npc_dialogues:
+                messages = npc_dialogues["通常"]
+            elif "初回" in npc_dialogues:
+                messages = npc_dialogues["初回"]
+            else:
+                # デフォルトメッセージ
+                messages = list(npc_dialogues.values())[0]
+
+            # 会話開始
+            self.dialogue_box.start_dialogue(messages, npc_name, auto_close=False)
+        else:
+            # 会話データがない場合はデフォルトメッセージ
+            default_message = npc.get('dialogue', '...')
+            self.dialogue_box.start_dialogue([default_message], npc_name, auto_close=False)
+
     def update(self):
         """状態の更新"""
+        # 会話ウィンドウの更新
+        self.dialogue_box.update()
+
+        # 会話中は移動できない
+        if self.dialogue_box.is_active:
+            return
+
         # キー入力処理
         keys = pygame.key.get_pressed()
         self.player.handle_input(keys)
@@ -172,6 +230,9 @@ class FieldMapState:
         # UI描画
         if self.show_info:
             self.draw_ui(surface)
+
+        # 会話ウィンドウ描画
+        self.dialogue_box.draw(surface)
 
     def draw_npcs(self, surface):
         """NPCを描画"""
