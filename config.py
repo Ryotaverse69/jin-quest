@@ -13,6 +13,11 @@ DISPLAY_HEIGHT = SCREEN_HEIGHT * SCALE_FACTOR
 # ゲーム設定
 FPS = 60
 TILE_SIZE = 16
+LANGUAGE = 'ja'  # 日本語固定
+
+# サーバー設定
+SERVER_PORT = 4000  # ローカルサーバーポート
+SERVER_HOST = 'localhost'
 
 # カラーパレット (SFC風)
 COLORS = {
