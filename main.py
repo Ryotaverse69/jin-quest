@@ -6,6 +6,7 @@ JID×QUEST - メインゲームファイル
 import pygame
 import sys
 from config import *
+from src.game_states.field_map import FieldMapState
 
 class Game:
     """メインゲームクラス"""
@@ -35,26 +36,48 @@ class Game:
         self.title_flash_timer = 0
         self.title_show_text = True
 
+        # ゲーム状態オブジェクト
+        self.field_state = None
+
     def handle_events(self):
         """イベント処理"""
-        for event in pygame.event.get():
+        events = pygame.event.get()
+
+        for event in events:
             if event.type == pygame.QUIT:
                 self.running = False
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    self.running = False
+                    if self.state == GameState.FIELD:
+                        # フィールドからタイトルに戻る
+                        self.state = GameState.TITLE
+                    else:
+                        # タイトル画面から終了
+                        self.running = False
 
                 # タイトル画面でEnterキーでゲーム開始
                 if self.state == GameState.TITLE:
                     if event.key == pygame.K_RETURN:
-                        print("ゲーム開始！（未実装）")
-                        # TODO: ゲーム開始処理
+                        self.start_game()
+
+        # フィールド状態のイベント処理
+        if self.state == GameState.FIELD and self.field_state:
+            self.field_state.handle_events(events)
+
+    def start_game(self):
+        """ゲームを開始"""
+        print("ゲーム開始！")
+        self.field_state = FieldMapState(self)
+        self.state = GameState.FIELD
 
     def update(self):
         """ゲームロジックの更新"""
         if self.state == GameState.TITLE:
             self.update_title()
+        elif self.state == GameState.FIELD:
+            if self.field_state:
+                self.field_state.update()
 
     def update_title(self):
         """タイトル画面の更新"""
@@ -70,6 +93,9 @@ class Game:
 
         if self.state == GameState.TITLE:
             self.draw_title()
+        elif self.state == GameState.FIELD:
+            if self.field_state:
+                self.field_state.draw(self.screen)
 
         # 3倍拡大して表示
         scaled_screen = pygame.transform.scale(self.screen,
