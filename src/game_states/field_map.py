@@ -3,9 +3,11 @@ JID×QUEST - フィールドマップ画面
 """
 
 import pygame
+import random
 from config import *
 from src.entities.player import Player
 from src.utils.tilemap import TileMap
+from src.battle_system.damage_calc import get_enemy_for_area
 
 
 class FieldMapState:
@@ -35,6 +37,11 @@ class FieldMapState:
 
         # UI表示
         self.show_info = True
+
+        # エンカウントシステム
+        self.encounter_rate = 0.05  # 1歩ごとの遭遇率（5%）
+        self.encounter_enabled = True  # エンカウント有効フラグ
+        self.area_level = 2  # 現在エリアのレベル（2F営業部）
 
     def handle_events(self, events):
         """
@@ -97,10 +104,38 @@ class FieldMapState:
                 self.player.moving = False
 
         # プレイヤー更新
+        was_moving = self.player.moving
         self.player.update()
+
+        # 移動完了時にエンカウント判定
+        if was_moving and not self.player.moving and self.encounter_enabled:
+            self.check_encounter()
 
         # カメラをプレイヤーに追従
         self.update_camera()
+
+    def check_encounter(self):
+        """エンカウント判定"""
+        if random.random() < self.encounter_rate:
+            # エンカウント発生！
+            enemy_data = get_enemy_for_area(self.area_level)
+            self.start_battle(enemy_data['type'], enemy_data['level'])
+
+    def start_battle(self, enemy_type, enemy_level):
+        """
+        バトルを開始
+
+        Args:
+            enemy_type: 敵のタイプ
+            enemy_level: 敵のレベル
+        """
+        from src.game_states.battle import BattleState
+
+        print(f"バトル開始！ {enemy_type} Lv.{enemy_level}")
+
+        # バトル状態に遷移
+        self.game.battle_state = BattleState(self.game, self.player, enemy_type, enemy_level)
+        self.game.state = GameState.BATTLE
 
     def update_camera(self):
         """カメラをプレイヤーに追従させる"""

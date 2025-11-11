@@ -38,6 +38,7 @@ class Game:
 
         # ゲーム状態オブジェクト
         self.field_state = None
+        self.battle_state = None
 
     def handle_events(self):
         """イベント処理"""
@@ -65,6 +66,10 @@ class Game:
         if self.state == GameState.FIELD and self.field_state:
             self.field_state.handle_events(events)
 
+        # バトル状態のイベント処理
+        if self.state == GameState.BATTLE and self.battle_state:
+            self.battle_state.handle_events(events)
+
     def start_game(self):
         """ゲームを開始"""
         print("ゲーム開始！")
@@ -78,6 +83,9 @@ class Game:
         elif self.state == GameState.FIELD:
             if self.field_state:
                 self.field_state.update()
+        elif self.state == GameState.BATTLE:
+            if self.battle_state:
+                self.battle_state.update()
 
     def update_title(self):
         """タイトル画面の更新"""
@@ -96,6 +104,9 @@ class Game:
         elif self.state == GameState.FIELD:
             if self.field_state:
                 self.field_state.draw(self.screen)
+        elif self.state == GameState.BATTLE:
+            if self.battle_state:
+                self.battle_state.draw(self.screen)
 
         # 3倍拡大して表示
         scaled_screen = pygame.transform.scale(self.screen,
