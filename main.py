@@ -35,10 +35,16 @@ class Game:
         # タイトル画面用の変数
         self.title_flash_timer = 0
         self.title_show_text = True
+        self.title_menu_items = ['はじめから', 'つづきから', 'おわる']
+        self.title_selected_index = 0
 
         # ゲーム状態オブジェクト
         self.field_state = None
         self.battle_state = None
+
+        # セーブ/ロードマネージャー
+        from src.utils.save_load import SaveLoadManager
+        self.save_manager = SaveLoadManager()
 
     def handle_events(self):
         """イベント処理"""
@@ -57,10 +63,14 @@ class Game:
                         # タイトル画面から終了
                         self.running = False
 
-                # タイトル画面でEnterキーでゲーム開始
+                # タイトル画面でのメニュー操作
                 if self.state == GameState.TITLE:
-                    if event.key == pygame.K_RETURN:
-                        self.start_game()
+                    if event.key == pygame.K_UP or event.key == pygame.K_w:
+                        self.title_selected_index = (self.title_selected_index - 1) % len(self.title_menu_items)
+                    elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                        self.title_selected_index = (self.title_selected_index + 1) % len(self.title_menu_items)
+                    elif event.key == pygame.K_RETURN:
+                        self.select_title_menu()
 
         # フィールド状態のイベント処理
         if self.state == GameState.FIELD and self.field_state:
@@ -70,11 +80,58 @@ class Game:
         if self.state == GameState.BATTLE and self.battle_state:
             self.battle_state.handle_events(events)
 
-    def start_game(self):
-        """ゲームを開始"""
+    def select_title_menu(self):
+        """タイトルメニューの選択処理"""
+        selected = self.title_menu_items[self.title_selected_index]
+
+        if selected == 'はじめから':
+            self.start_new_game()
+        elif selected == 'つづきから':
+            self.show_load_menu()
+        elif selected == 'おわる':
+            self.running = False
+
+    def start_new_game(self):
+        """新しいゲームを開始"""
         print("ゲーム開始！")
         self.field_state = FieldMapState(self)
         self.state = GameState.FIELD
+
+    def start_game(self):
+        """ゲームを開始（後方互換性のため残す）"""
+        self.start_new_game()
+
+    def show_load_menu(self):
+        """ロードメニューを表示（簡易版）"""
+        # スロット1からロードを試みる
+        save_data = self.save_manager.load_game(slot=1)
+        if save_data:
+            self.load_game(save_data)
+        else:
+            print("セーブデータがありません")
+
+    def load_game(self, save_data):
+        """
+        セーブデータからゲームをロード
+
+        Args:
+            save_data: ロードしたセーブデータ
+        """
+        print("ゲームをロード中...")
+
+        # マップパスを取得
+        map_path = save_data['map']['path']
+
+        # フィールド状態を作成
+        self.field_state = FieldMapState(self, map_path)
+
+        # プレイヤーデータを適用
+        self.save_manager.apply_save_data(self.field_state.player, save_data)
+
+        # ゲーム状態をフィールドに
+        self.state = GameState.FIELD
+
+        print(f"ロード完了: {self.field_state.player.name} Lv.{self.field_state.player.level}")
 
     def update(self):
         """ゲームロジックの更新"""
@@ -136,12 +193,21 @@ class Game:
         subtitle_rect = subtitle_surface.get_rect(center=(SCREEN_WIDTH // 2, 95))
         self.screen.blit(subtitle_surface, subtitle_rect)
 
-        # "PRESS ENTER" (点滅)
-        if self.title_show_text:
-            press_text = "PRESS ENTER"
-            press_surface = self.font.render(press_text, True, COLORS['WHITE'])
-            press_rect = press_surface.get_rect(center=(SCREEN_WIDTH // 2, 170))
-            self.screen.blit(press_surface, press_rect)
+        # メニュー項目
+        menu_start_y = 140
+        for i, item in enumerate(self.title_menu_items):
+            y_offset = menu_start_y + i * 20
+
+            # カーソル
+            if i == self.title_selected_index:
+                cursor_surface = self.font.render("▶", True, COLORS['GOLD'])
+                cursor_rect = cursor_surface.get_rect(center=(SCREEN_WIDTH // 2 - 40, y_offset))
+                self.screen.blit(cursor_surface, cursor_rect)
+
+            # メニュー項目
+            item_surface = self.font.render(item, True, COLORS['WHITE'])
+            item_rect = item_surface.get_rect(center=(SCREEN_WIDTH // 2, y_offset))
+            self.screen.blit(item_surface, item_rect)
 
         # コピーライト
         copyright_text = "(C) 2024 JID Corporation"

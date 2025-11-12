@@ -10,6 +10,8 @@ from src.entities.player import Player
 from src.utils.tilemap import TileMap
 from src.battle_system.damage_calc import get_enemy_for_area
 from src.ui.dialogue_box import DialogueBox
+from src.ui.menu_window import MenuWindow
+from src.utils.save_load import SaveLoadManager
 
 
 class FieldMapState:
@@ -25,6 +27,7 @@ class FieldMapState:
         """
         self.game = game
         self.font = pygame.font.Font(None, 16)
+        self.map_path = map_path  # マップパスを保存
 
         # マップ読み込み
         self.tilemap = TileMap(map_path)
@@ -49,6 +52,12 @@ class FieldMapState:
         self.dialogue_box = DialogueBox()
         self.load_dialogue_data()
 
+        # セーブ/ロードシステム
+        self.save_manager = SaveLoadManager()
+
+        # メニューシステム
+        self.menu_window = MenuWindow(save_callback=self.save_game)
+
     def load_dialogue_data(self):
         """会話データを読み込み"""
         try:
@@ -58,6 +67,18 @@ class FieldMapState:
             print("警告: 会話データが見つかりません")
             self.dialogue_data = {}
 
+    def save_game(self, slot):
+        """
+        ゲームをセーブ
+
+        Args:
+            slot: セーブスロット番号
+
+        Returns:
+            bool: セーブ成功時True
+        """
+        return self.save_manager.save_game(self.player, self.map_path, slot)
+
     def handle_events(self, events):
         """
         イベント処理
@@ -65,6 +86,11 @@ class FieldMapState:
         Args:
             events: pygameイベントリスト
         """
+        # メニュー表示中はメニューに入力を渡す
+        if self.menu_window.is_active:
+            self.menu_window.handle_input(events)
+            return
+
         # 会話中は会話ウィンドウに入力を渡す
         if self.dialogue_box.is_active:
             self.dialogue_box.handle_input(events)
@@ -73,8 +99,8 @@ class FieldMapState:
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    # メニューを開く（未実装）
-                    print("メニューを開く（未実装）")
+                    # メニューを開く
+                    self.menu_window.open()
 
                 if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
                     # 目の前のNPCに話しかける
@@ -147,8 +173,11 @@ class FieldMapState:
         # 会話ウィンドウの更新
         self.dialogue_box.update()
 
-        # 会話中は移動できない
-        if self.dialogue_box.is_active:
+        # メニューウィンドウの更新
+        self.menu_window.update()
+
+        # メニュー表示中または会話中は移動できない
+        if self.menu_window.is_active or self.dialogue_box.is_active:
             return
 
         # キー入力処理
@@ -233,6 +262,9 @@ class FieldMapState:
 
         # 会話ウィンドウ描画
         self.dialogue_box.draw(surface)
+
+        # メニューウィンドウ描画
+        self.menu_window.draw(surface, self.player)
 
     def draw_npcs(self, surface):
         """NPCを描画"""
