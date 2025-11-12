@@ -1,0 +1,205 @@
+{
+  "welcome_ceremony": {
+    "name": "入社式",
+    "description": "JIDへの入社式イベント",
+    "conditions": [],
+    "steps": [
+      {
+        "type": "dialogue",
+        "speaker": "井坂会長",
+        "messages": [
+          "ようこそ、JID Corporationへ。",
+          "私は井坂、この会社の創設者だ。",
+          "今日から君も我が社の一員だ。",
+          "営業として、多くの契約を取ってきてほしい。"
+        ]
+      },
+      {
+        "type": "dialogue",
+        "speaker": "梅田社長",
+        "messages": [
+          "入社おめでとうございます！",
+          "私は梅田、社長をしています。",
+          "一緒に最強の会社を作りましょう。",
+          "困ったことがあれば、いつでも相談してください。"
+        ]
+      },
+      {
+        "type": "set_flag",
+        "flag": "welcome_ceremony_done"
+      }
+    ],
+    "rewards": {
+      "flags": ["tutorial_complete"]
+    }
+  },
+  "first_contract_tutorial": {
+    "name": "初めての契約",
+    "description": "初めての契約を取るチュートリアル",
+    "conditions": [
+      {
+        "type": "flag",
+        "flag": "welcome_ceremony_done",
+        "value": true
+      }
+    ],
+    "steps": [
+      {
+        "type": "dialogue",
+        "speaker": "営業リーダー",
+        "messages": [
+          "おお、新人さんか。",
+          "まずは実践だ。",
+          "不動産会社との契約を取ってきてくれ。",
+          "敵と戦って経験を積むんだ！"
+        ]
+      },
+      {
+        "type": "objective",
+        "text": "レベル3まで成長しよう"
+      }
+    ],
+    "rewards": {
+      "flags": ["first_contract_complete"],
+      "exp": 100
+    }
+  },
+  "level_5_promotion": {
+    "name": "昇進のお知らせ",
+    "description": "レベル5到達時の昇進イベント",
+    "conditions": [
+      {
+        "type": "flag",
+        "flag": "first_contract_complete",
+        "value": true
+      }
+    ],
+    "steps": [
+      {
+        "type": "dialogue",
+        "speaker": "井坂会長",
+        "messages": [
+          "順調に成長しているようだな。",
+          "君をスーパーバイザーに昇進させよう。",
+          "これからも頑張ってくれ。"
+        ]
+      },
+      {
+        "type": "set_flag",
+        "flag": "promoted_to_supervisor"
+      }
+    ],
+    "rewards": {
+      "flags": ["supervisor_rank_unlocked"]
+    }
+  },
+  "meet_pomekichi": {
+    "name": "ポメ吉との出会い",
+    "description": "梅田社長の愛犬ポメ吉との出会い",
+    "conditions": [
+      {
+        "type": "flag",
+        "flag": "welcome_ceremony_done",
+        "value": true
+      }
+    ],
+    "steps": [
+      {
+        "type": "dialogue",
+        "speaker": "梅田社長",
+        "messages": [
+          "あ、ポメ吉がいますね。",
+          "私の愛犬なんです。",
+          "ワンワン！"
+        ]
+      },
+      {
+        "type": "dialogue",
+        "speaker": "ポメ吉",
+        "messages": [
+          "ワン！",
+          "（ポメ吉は尻尾を振っている）",
+          "ワンワン！"
+        ]
+      },
+      {
+        "type": "dialogue",
+        "speaker": "梅田社長",
+        "messages": [
+          "ポメ吉に話しかけると、",
+          "ゲームをセーブできますよ。",
+          "覚えておいてくださいね。"
+        ]
+      },
+      {
+        "type": "set_flag",
+        "flag": "met_pomekichi"
+      }
+    ],
+    "rewards": {
+      "flags": ["save_tutorial_complete"]
+    }
+  },
+  "explore_building": {
+    "name": "本社ビル探索",
+    "description": "JID本社ビルの探索を始める",
+    "conditions": [
+      {
+        "type": "flag",
+        "flag": "first_contract_complete",
+        "value": true
+      }
+    ],
+    "steps": [
+      {
+        "type": "dialogue",
+        "speaker": "営業リーダー",
+        "messages": [
+          "そろそろ他のフロアも",
+          "見て回るといい。",
+          "1階には受付と総務がいる。",
+          "3階には人事と経理がいるぞ。",
+          "4階には会長室と社長室がある。"
+        ]
+      },
+      {
+        "type": "objective",
+        "text": "本社ビルの各階を探索しよう"
+      }
+    ],
+    "rewards": {
+      "flags": ["building_exploration_started"]
+    }
+  },
+  "boss_battle_preparation": {
+    "name": "大口契約への準備",
+    "description": "大口契約を取るための準備イベント",
+    "conditions": [
+      {
+        "type": "flag",
+        "flag": "promoted_to_supervisor",
+        "value": true
+      }
+    ],
+    "steps": [
+      {
+        "type": "dialogue",
+        "speaker": "井坂会長",
+        "messages": [
+          "君には大きな期待をしている。",
+          "そろそろ大口の契約に",
+          "挑戦してもらおうか。",
+          "レベル10まで成長したら、",
+          "また声をかけよう。"
+        ]
+      },
+      {
+        "type": "objective",
+        "text": "レベル10まで成長しよう"
+      }
+    ],
+    "rewards": {
+      "flags": ["boss_battle_unlocked"]
+    }
+  }
+}

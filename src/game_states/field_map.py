@@ -12,6 +12,8 @@ from src.battle_system.damage_calc import get_enemy_for_area
 from src.ui.dialogue_box import DialogueBox
 from src.ui.menu_window import MenuWindow
 from src.utils.save_load import SaveLoadManager
+from src.utils.event_manager import EventManager
+from src.systems.quest_system import QuestSystem
 
 
 class FieldMapState:
@@ -54,6 +56,14 @@ class FieldMapState:
 
         # セーブ/ロードシステム
         self.save_manager = SaveLoadManager()
+
+        # イベントシステム
+        self.event_manager = EventManager()
+        self.event_manager.load_events()
+
+        # クエストシステム
+        self.quest_system = QuestSystem()
+        self.quest_system.load_quests()
 
         # メニューシステム
         self.menu_window = MenuWindow(save_callback=self.save_game)

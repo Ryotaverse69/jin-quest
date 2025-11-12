@@ -1,0 +1,238 @@
+{
+  "quest_001": {
+    "name": "新人研修",
+    "description": "JIDの新人として基礎を学ぶ",
+    "type": "main",
+    "required_level": 1,
+    "prerequisites": [],
+    "required_flags": [],
+    "objectives": [
+      {
+        "id": "talk_to_leader",
+        "type": "talk",
+        "description": "営業リーダーに話しかける",
+        "target": 1
+      },
+      {
+        "id": "explore_floor",
+        "type": "explore",
+        "description": "2階フロアを探索する",
+        "target": 1
+      }
+    ],
+    "rewards": {
+      "exp": 50,
+      "gold": 0,
+      "items": [],
+      "flags": ["tutorial_phase_1_complete"]
+    }
+  },
+  "quest_002": {
+    "name": "初めての契約",
+    "description": "実戦経験を積み、レベル3に到達する",
+    "type": "main",
+    "required_level": 1,
+    "prerequisites": ["quest_001"],
+    "required_flags": ["tutorial_phase_1_complete"],
+    "objectives": [
+      {
+        "id": "reach_level_3",
+        "type": "level",
+        "description": "レベル3に到達する",
+        "target": 3
+      },
+      {
+        "id": "defeat_enemies",
+        "type": "battle",
+        "description": "敵を3体倒す",
+        "target": 3
+      }
+    ],
+    "rewards": {
+      "exp": 100,
+      "gold": 500,
+      "items": [],
+      "flags": ["first_contract_complete"]
+    }
+  },
+  "quest_003": {
+    "name": "スーパーバイザーへの道",
+    "description": "実績を積んでスーパーバイザーに昇進する",
+    "type": "main",
+    "required_level": 3,
+    "prerequisites": ["quest_002"],
+    "required_flags": ["first_contract_complete"],
+    "objectives": [
+      {
+        "id": "reach_level_5",
+        "type": "level",
+        "description": "レベル5に到達する",
+        "target": 5
+      },
+      {
+        "id": "talk_to_chairman",
+        "type": "talk",
+        "description": "井坂会長に報告する",
+        "target": 1
+      }
+    ],
+    "rewards": {
+      "exp": 200,
+      "gold": 1000,
+      "items": [],
+      "flags": ["promoted_to_supervisor"]
+    }
+  },
+  "quest_004": {
+    "name": "ポメ吉とお友達",
+    "description": "梅田社長の愛犬ポメ吉と仲良くなる",
+    "type": "side",
+    "required_level": 1,
+    "prerequisites": [],
+    "required_flags": ["welcome_ceremony_done"],
+    "objectives": [
+      {
+        "id": "meet_pomekichi",
+        "type": "talk",
+        "description": "ポメ吉に話しかける",
+        "target": 1
+      },
+      {
+        "id": "save_game",
+        "type": "action",
+        "description": "ゲームをセーブする",
+        "target": 1
+      }
+    ],
+    "rewards": {
+      "exp": 50,
+      "gold": 0,
+      "items": [],
+      "flags": ["pomekichi_friend"]
+    }
+  },
+  "quest_005": {
+    "name": "本社ビル探索",
+    "description": "JID本社ビルの各階を探索する",
+    "type": "side",
+    "required_level": 3,
+    "prerequisites": ["quest_002"],
+    "required_flags": ["first_contract_complete"],
+    "objectives": [
+      {
+        "id": "visit_1f",
+        "type": "visit",
+        "description": "1階を訪問する",
+        "target": 1
+      },
+      {
+        "id": "visit_3f",
+        "type": "visit",
+        "description": "3階を訪問する",
+        "target": 1
+      },
+      {
+        "id": "visit_4f",
+        "type": "visit",
+        "description": "4階を訪問する",
+        "target": 1
+      }
+    ],
+    "rewards": {
+      "exp": 150,
+      "gold": 800,
+      "items": [],
+      "flags": ["building_explorer"]
+    }
+  },
+  "quest_006": {
+    "name": "大口契約への挑戦",
+    "description": "レベル10に到達し、大口契約に挑む準備をする",
+    "type": "main",
+    "required_level": 5,
+    "prerequisites": ["quest_003"],
+    "required_flags": ["promoted_to_supervisor"],
+    "objectives": [
+      {
+        "id": "reach_level_10",
+        "type": "level",
+        "description": "レベル10に到達する",
+        "target": 10
+      },
+      {
+        "id": "defeat_strong_enemies",
+        "type": "battle",
+        "description": "強敵を5体倒す",
+        "target": 5
+      },
+      {
+        "id": "report_to_chairman",
+        "type": "talk",
+        "description": "井坂会長に報告する",
+        "target": 1
+      }
+    ],
+    "rewards": {
+      "exp": 500,
+      "gold": 3000,
+      "items": [],
+      "flags": ["big_contract_ready"]
+    }
+  },
+  "quest_007": {
+    "name": "営業部の仲間たち",
+    "description": "営業部の全員と会話する",
+    "type": "side",
+    "required_level": 1,
+    "prerequisites": [],
+    "required_flags": [],
+    "objectives": [
+      {
+        "id": "talk_to_staff_a",
+        "type": "talk",
+        "description": "営業スタッフAと会話する",
+        "target": 1
+      },
+      {
+        "id": "talk_to_staff_b",
+        "type": "talk",
+        "description": "営業スタッフBと会話する",
+        "target": 1
+      },
+      {
+        "id": "talk_to_leader",
+        "type": "talk",
+        "description": "営業リーダーと会話する",
+        "target": 1
+      }
+    ],
+    "rewards": {
+      "exp": 100,
+      "gold": 500,
+      "items": [],
+      "flags": ["sales_team_friend"]
+    }
+  },
+  "quest_008": {
+    "name": "経験豊富な営業",
+    "description": "多くの契約を取り、経験を積む",
+    "type": "side",
+    "required_level": 1,
+    "prerequisites": [],
+    "required_flags": [],
+    "objectives": [
+      {
+        "id": "win_battles",
+        "type": "battle",
+        "description": "バトルに10回勝利する",
+        "target": 10
+      }
+    ],
+    "rewards": {
+      "exp": 300,
+      "gold": 2000,
+      "items": [],
+      "flags": ["experienced_salesperson"]
+    }
+  }
+}
