@@ -33,9 +33,13 @@ class BattleState:
 
         # UI状態
         self.command_index = 0  # 選択中のコマンド
-        self.commands = ['たたかう', 'ぼうぎょ', 'にげる']
+        self.commands = ['たたかう', 'スキル', 'アイテム', 'ぼうぎょ', 'にげる']
         self.message_wait_timer = 0  # メッセージ表示待機時間
         self.message_display_time = 90  # メッセージ表示時間（1.5秒）
+
+        # サブメニュー状態
+        self.menu_mode = 'main'  # 'main', 'skill', 'item'
+        self.submenu_index = 0  # サブメニューの選択インデックス
 
         # トランジション
         self.transition_timer = 0
@@ -79,24 +83,122 @@ class BattleState:
             for event in events:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_UP or event.key == pygame.K_w:
-                        self.command_index = (self.command_index - 1) % len(self.commands)
+                        if self.menu_mode == 'main':
+                            self.command_index = (self.command_index - 1) % len(self.commands)
+                        else:
+                            # サブメニュー
+                            if self.menu_mode == 'skill':
+                                max_index = len(self.player.skills)
+                            elif self.menu_mode == 'item':
+                                max_index = len(self.player.items)
+                            self.submenu_index = (self.submenu_index - 1) % max_index
 
                     elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                        self.command_index = (self.command_index + 1) % len(self.commands)
+                        if self.menu_mode == 'main':
+                            self.command_index = (self.command_index + 1) % len(self.commands)
+                        else:
+                            # サブメニュー
+                            if self.menu_mode == 'skill':
+                                max_index = len(self.player.skills)
+                            elif self.menu_mode == 'item':
+                                max_index = len(self.player.items)
+                            self.submenu_index = (self.submenu_index + 1) % max_index
 
                     elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
                         self.execute_command()
 
+                    elif event.key == pygame.K_ESCAPE or event.key == pygame.K_x:
+                        # サブメニューから戻る
+                        if self.menu_mode != 'main':
+                            self.menu_mode = 'main'
+                            self.submenu_index = 0
+
     def execute_command(self):
         """選択されたコマンドを実行"""
-        command = self.commands[self.command_index]
+        if self.menu_mode == 'main':
+            command = self.commands[self.command_index]
 
-        if command == 'たたかう':
-            self.battle_manager.execute_player_attack()
-        elif command == 'ぼうぎょ':
-            self.battle_manager.execute_player_defend()
-        elif command == 'にげる':
-            self.battle_manager.execute_player_escape()
+            if command == 'たたかう':
+                self.battle_manager.execute_player_attack()
+            elif command == 'スキル':
+                # スキルメニューを開く
+                if len(self.player.skills) > 0:
+                    self.menu_mode = 'skill'
+                    self.submenu_index = 0
+                else:
+                    self.battle_manager.add_message("使えるスキルがない！")
+            elif command == 'アイテム':
+                # アイテムメニューを開く
+                if len(self.player.items) > 0 and any(item['count'] > 0 for item in self.player.items):
+                    self.menu_mode = 'item'
+                    self.submenu_index = 0
+                else:
+                    self.battle_manager.add_message("使えるアイテムがない！")
+            elif command == 'ぼうぎょ':
+                self.battle_manager.execute_player_defend()
+            elif command == 'にげる':
+                self.battle_manager.execute_player_escape()
+
+        elif self.menu_mode == 'skill':
+            # スキル使用
+            skill = self.player.skills[self.submenu_index]
+            if self.player.mp >= skill['mp_cost']:
+                self.player.mp -= skill['mp_cost']
+                self.execute_skill(skill)
+                self.menu_mode = 'main'
+            else:
+                self.battle_manager.add_message("MPが足りない！")
+
+        elif self.menu_mode == 'item':
+            # アイテム使用
+            item = self.player.items[self.submenu_index]
+            if item['count'] > 0:
+                item['count'] -= 1
+                self.execute_item(item)
+                self.menu_mode = 'main'
+            else:
+                self.battle_manager.add_message("アイテムがない！")
+
+    def execute_skill(self, skill):
+        """スキルを実行"""
+        if 'heal' in skill:
+            # 回復スキル
+            heal_amount = skill['heal']
+            self.player.hp = min(self.player.max_hp, self.player.hp + heal_amount)
+            self.battle_manager.add_message(f"{skill['name']}を使った！")
+            self.battle_manager.add_message(f"HPが{heal_amount}回復した！")
+            self.battle_manager.battle_phase = 'enemy_turn'
+            self.battle_manager.execute_enemy_turn()
+        else:
+            # 攻撃スキル
+            damage = int(self.player.atk * skill['power'])
+            actual_damage = self.enemy.take_damage(damage)
+            self.battle_manager.add_message(f"{skill['name']}！")
+            self.battle_manager.add_message(f"{self.enemy.name}に{actual_damage}のダメージ！")
+
+            if not self.enemy.is_alive:
+                self.battle_manager.battle_phase = 'victory'
+                self.battle_manager.calculate_rewards()
+            else:
+                self.battle_manager.battle_phase = 'enemy_turn'
+                self.battle_manager.execute_enemy_turn()
+
+    def execute_item(self, item):
+        """アイテムを使用"""
+        effect = item['effect']
+        value = item['value']
+
+        self.battle_manager.add_message(f"{item['name']}を使った！")
+
+        if effect == 'heal_hp':
+            self.player.hp = min(self.player.max_hp, self.player.hp + value)
+            self.battle_manager.add_message(f"HPが{value}回復した！")
+        elif effect == 'heal_mp':
+            self.player.mp = min(self.player.max_mp, self.player.mp + value)
+            self.battle_manager.add_message(f"MPが{value}回復した！")
+
+        self.battle_manager.battle_phase = 'enemy_turn'
+        self.battle_manager.execute_enemy_turn()
 
     def update(self):
         """バトル状態の更新"""
@@ -261,25 +363,120 @@ class BattleState:
 
     def draw_command_window(self, surface):
         """コマンドウィンドウの描画"""
-        # ウィンドウ背景
-        window_x = 150
-        window_y = 155
-        window_width = 90
-        window_height = 50
+        if self.menu_mode == 'main':
+            # メインコマンドウィンドウ
+            window_x = SCREEN_WIDTH - 400
+            window_y = SCREEN_HEIGHT - 250
+            window_width = 350
+            window_height = 200
+
+            window_bg = pygame.Surface((window_width, window_height))
+            window_bg.fill(COLORS['DARK_BLUE'])
+            pygame.draw.rect(window_bg, COLORS['WINDOW_BLUE'], (0, 0, window_width, window_height), 3)
+            surface.blit(window_bg, (window_x, window_y))
+
+            # コマンドリストを2列で表示
+            cols = 2
+            for i, command in enumerate(self.commands):
+                col = i % cols
+                row = i // cols
+                x_offset = window_x + 20 + col * 150
+                y_offset = window_y + 20 + row * 50
+
+                # 選択中のコマンドにカーソル
+                if i == self.command_index:
+                    cursor_surface = self.font.render("▶", True, COLORS['GOLD'])
+                    surface.blit(cursor_surface, (x_offset - 5, y_offset))
+
+                command_surface = self.font.render(command, True, COLORS['WHITE'])
+                surface.blit(command_surface, (x_offset + 30, y_offset))
+
+        elif self.menu_mode == 'skill':
+            # スキルウィンドウ
+            self.draw_skill_window(surface)
+
+        elif self.menu_mode == 'item':
+            # アイテムウィンドウ
+            self.draw_item_window(surface)
+
+    def draw_skill_window(self, surface):
+        """スキルウィンドウの描画"""
+        window_x = SCREEN_WIDTH - 700
+        window_y = SCREEN_HEIGHT - 350
+        window_width = 650
+        window_height = 300
 
         window_bg = pygame.Surface((window_width, window_height))
         window_bg.fill(COLORS['DARK_BLUE'])
-        pygame.draw.rect(window_bg, COLORS['WINDOW_BLUE'], (0, 0, window_width, window_height), 2)
+        pygame.draw.rect(window_bg, COLORS['WINDOW_BLUE'], (0, 0, window_width, window_height), 3)
         surface.blit(window_bg, (window_x, window_y))
 
-        # コマンドリスト
-        for i, command in enumerate(self.commands):
-            y_offset = window_y + 10 + i * 15
+        # タイトル
+        title_surface = self.font.render("スキル選択", True, COLORS['GOLD'])
+        surface.blit(title_surface, (window_x + 20, window_y + 15))
 
-            # 選択中のコマンドにカーソル
-            if i == self.command_index:
+        # スキルリスト
+        for i, skill in enumerate(self.player.skills):
+            y_offset = window_y + 60 + i * 70
+
+            # 選択中のスキルにカーソル
+            if i == self.submenu_index:
                 cursor_surface = self.font.render("▶", True, COLORS['GOLD'])
-                surface.blit(cursor_surface, (window_x + 5, y_offset))
+                surface.blit(cursor_surface, (window_x + 15, y_offset))
 
-            command_surface = self.font.render(command, True, COLORS['WHITE'])
-            surface.blit(command_surface, (window_x + 20, y_offset))
+            # スキル名
+            skill_surface = self.font.render(skill['name'], True, COLORS['WHITE'])
+            surface.blit(skill_surface, (window_x + 50, y_offset))
+
+            # MP消費
+            mp_text = f"MP:{skill['mp_cost']}"
+            mp_color = COLORS['WHITE'] if self.player.mp >= skill['mp_cost'] else COLORS['RED']
+            mp_surface = self.font.render(mp_text, True, mp_color)
+            surface.blit(mp_surface, (window_x + 350, y_offset))
+
+            # 説明
+            desc_surface = self.font.render(skill['description'], True, COLORS['WINDOW_BLUE'])
+            surface.blit(desc_surface, (window_x + 50, y_offset + 30))
+
+        # 操作説明
+        help_surface = self.font.render("Enter:決定  X:キャンセル", True, COLORS['GOLD'])
+        surface.blit(help_surface, (window_x + 20, window_y + window_height - 40))
+
+    def draw_item_window(self, surface):
+        """アイテムウィンドウの描画"""
+        window_x = SCREEN_WIDTH - 700
+        window_y = SCREEN_HEIGHT - 350
+        window_width = 650
+        window_height = 300
+
+        window_bg = pygame.Surface((window_width, window_height))
+        window_bg.fill(COLORS['DARK_BLUE'])
+        pygame.draw.rect(window_bg, COLORS['WINDOW_BLUE'], (0, 0, window_width, window_height), 3)
+        surface.blit(window_bg, (window_x, window_y))
+
+        # タイトル
+        title_surface = self.font.render("アイテム選択", True, COLORS['GOLD'])
+        surface.blit(title_surface, (window_x + 20, window_y + 15))
+
+        # アイテムリスト
+        for i, item in enumerate(self.player.items):
+            y_offset = window_y + 60 + i * 60
+
+            # 選択中のアイテムにカーソル
+            if i == self.submenu_index:
+                cursor_surface = self.font.render("▶", True, COLORS['GOLD'])
+                surface.blit(cursor_surface, (window_x + 15, y_offset))
+
+            # アイテム名
+            item_color = COLORS['WHITE'] if item['count'] > 0 else COLORS['WINDOW_BLUE']
+            item_surface = self.font.render(item['name'], True, item_color)
+            surface.blit(item_surface, (window_x + 50, y_offset))
+
+            # 所持数
+            count_text = f"×{item['count']}"
+            count_surface = self.font.render(count_text, True, item_color)
+            surface.blit(count_surface, (window_x + 400, y_offset))
+
+        # 操作説明
+        help_surface = self.font.render("Enter:決定  X:キャンセル", True, COLORS['GOLD'])
+        surface.blit(help_surface, (window_x + 20, window_y + window_height - 40))

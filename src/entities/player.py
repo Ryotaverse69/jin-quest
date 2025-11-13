@@ -55,6 +55,18 @@ class Player(pygame.sprite.Sprite):
         self.defense = 6
         self.spd = 5
 
+        # スキル
+        self.skills = [
+            {'name': '強気の営業トーク', 'mp_cost': 3, 'power': 1.5, 'description': 'ATKの1.5倍のダメージ'},
+            {'name': '誠意の謝罪', 'mp_cost': 5, 'power': 0, 'heal': 15, 'description': 'HPを15回復'}
+        ]
+
+        # アイテム
+        self.items = [
+            {'name': '栄養ドリンク', 'count': 3, 'effect': 'heal_hp', 'value': 20},
+            {'name': 'マジックウォーター', 'count': 2, 'effect': 'heal_mp', 'value': 10}
+        ]
+
         # 描画用サーフェス（仮：16x16の四角）
         self.image = self.create_placeholder_sprite()
         self.rect = self.image.get_rect()
