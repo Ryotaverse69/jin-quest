@@ -16,7 +16,7 @@ class MenuWindow:
         Args:
             save_callback: セーブ実行時のコールバック関数
         """
-        self.font = pygame.font.Font(None, 16)
+        self.font = pygame.font.Font(None, FONT_SIZE)
 
         # メニュー項目
         self.menu_items = ['つよさ', 'どうぐ', 'セーブ', 'とじる']

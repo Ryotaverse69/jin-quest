@@ -15,12 +15,12 @@ class Game:
         """ゲームの初期化"""
         pygame.init()
 
-        # 画面設定
-        # 実際の描画サーフェス (256x224 - SFC標準)
+        # 画面設定 (HD-2D)
+        # 実際の描画サーフェス = 表示サーフェス (スケーリングなし)
         self.screen = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-        # 表示用ウィンドウ (3倍拡大)
+        # 表示用ウィンドウ (HD解像度)
         self.display = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
-        pygame.display.set_caption("JID×QUEST")
+        pygame.display.set_caption("JID×QUEST - HD-2D Edition")
 
         # クロック設定
         self.clock = pygame.time.Clock()
@@ -29,8 +29,8 @@ class Game:
         self.state = GameState.TITLE
         self.running = True
 
-        # フォント設定
-        self.font = pygame.font.Font(None, 16)  # とりあえずデフォルトフォント
+        # フォント設定 (HD対応)
+        self.font = pygame.font.Font(None, FONT_SIZE)
 
         # タイトル画面用の変数
         self.title_flash_timer = 0

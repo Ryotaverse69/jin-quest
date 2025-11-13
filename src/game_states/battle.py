@@ -23,7 +23,7 @@ class BattleState:
         """
         self.game = game
         self.player = player
-        self.font = pygame.font.Font(None, 16)
+        self.font = pygame.font.Font(None, FONT_SIZE)
 
         # 敵を生成
         self.enemy = Enemy(enemy_type, enemy_level)

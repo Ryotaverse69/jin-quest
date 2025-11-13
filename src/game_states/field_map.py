@@ -28,7 +28,7 @@ class FieldMapState:
             map_path: マップデータのパス
         """
         self.game = game
-        self.font = pygame.font.Font(None, 16)
+        self.font = pygame.font.Font(None, FONT_SIZE)
         self.map_path = map_path  # マップパスを保存
 
         # マップ読み込み
@@ -67,6 +67,9 @@ class FieldMapState:
 
         # メニューシステム
         self.menu_window = MenuWindow(save_callback=self.save_game)
+
+        # 初回起動フラグ
+        self.initial_event_triggered = False
 
     def load_dialogue_data(self):
         """会話データを読み込み"""
@@ -178,8 +181,82 @@ class FieldMapState:
             default_message = npc.get('dialogue', '...')
             self.dialogue_box.start_dialogue([default_message], npc_name, auto_close=False)
 
+    def trigger_story_event(self, event_id):
+        """
+        ストーリーイベントを発生させる
+
+        Args:
+            event_id: イベントID
+        """
+        event_data = self.event_manager.start_event(event_id)
+        if not event_data:
+            return
+
+        # イベントの最初のステップを処理
+        self.process_event_step()
+
+    def process_event_step(self):
+        """現在のイベントステップを処理"""
+        step_data = self.event_manager.get_current_step()
+        if not step_data:
+            return
+
+        step_type = step_data.get('type')
+
+        if step_type == 'dialogue':
+            # 会話ステップ
+            speaker = step_data.get('speaker', 'システム')
+            messages = step_data.get('messages', [])
+            self.dialogue_box.start_dialogue(messages, speaker, auto_close=False)
+            # 会話終了後に次のステップへ進める
+            self.event_manager.advance_step()
+            # 次のステップがあれば処理
+            if self.event_manager.is_event_active():
+                # 会話が終わったら次のステップを処理（連続会話の場合）
+                next_step = self.event_manager.get_current_step()
+                if next_step and next_step.get('type') == 'dialogue':
+                    # 現在の会話が終わるまで待つ必要があるので、ここでは処理しない
+                    pass
+
+        elif step_type == 'set_flag':
+            # フラグ設定ステップ
+            flag_name = step_data.get('flag')
+            if flag_name:
+                self.event_manager.set_flag(flag_name, True)
+            # 次のステップへ
+            if not self.event_manager.advance_step():
+                # イベント終了
+                pass
+
+        elif step_type == 'objective':
+            # 目標表示ステップ
+            objective_text = step_data.get('text', '')
+            self.dialogue_box.start_dialogue([f"【目標】", objective_text], "システム", auto_close=False)
+            self.event_manager.advance_step()
+
     def update(self):
         """状態の更新"""
+        # 初回イベントの発生
+        if not self.initial_event_triggered and not self.dialogue_box.is_active:
+            self.initial_event_triggered = True
+            # 入社式イベントが未完了なら開始
+            if self.event_manager.can_trigger_event('welcome_ceremony'):
+                welcome_messages = [
+                    "ようこそ、JID Corporationへ。",
+                    "私は井坂、この会社の創設者だ。",
+                    "今日から君も我が社の一員だ。",
+                    "営業として、多くの契約を",
+                    "取ってきてほしい。",
+                    "",
+                    "入社おめでとうございます！",
+                    "私は梅田、社長をしています。",
+                    "一緒に最強の会社を作りましょう。",
+                    "困ったことがあれば、",
+                    "いつでも相談してください。"
+                ]
+                self.dialogue_box.start_dialogue(welcome_messages, "JID Corporation", auto_close=False)
+                self.event_manager.set_flag('welcome_ceremony_done', True)
+
         # 会話ウィンドウの更新
         self.dialogue_box.update()
 

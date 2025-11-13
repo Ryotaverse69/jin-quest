@@ -11,13 +11,13 @@ class DialogueBox:
 
     def __init__(self):
         """会話ウィンドウの初期化"""
-        self.font = pygame.font.Font(None, 16)
+        self.font = pygame.font.Font(None, FONT_SIZE)
 
-        # ウィンドウサイズと位置
-        self.window_width = SCREEN_WIDTH - 20
-        self.window_height = 60
-        self.window_x = 10
-        self.window_y = SCREEN_HEIGHT - self.window_height - 10
+        # ウィンドウサイズと位置 (フルHD対応)
+        self.window_width = SCREEN_WIDTH - 100
+        self.window_height = 250
+        self.window_x = 50
+        self.window_y = SCREEN_HEIGHT - self.window_height - 50
 
         # 会話テキスト
         self.messages = []  # メッセージリスト
