@@ -281,12 +281,57 @@ class FieldMapState:
         was_moving = self.player.moving
         self.player.update()
 
-        # 移動完了時にエンカウント判定
-        if was_moving and not self.player.moving and self.encounter_enabled:
-            self.check_encounter()
+        # 移動完了時の処理
+        if was_moving and not self.player.moving:
+            # マップ遷移イベントをチェック
+            self.check_map_transition()
+
+            # エンカウント判定
+            if self.encounter_enabled:
+                self.check_encounter()
 
         # カメラをプレイヤーに追従
         self.update_camera()
+
+    def check_map_transition(self):
+        """マップ遷移イベントをチェック"""
+        event = self.tilemap.get_event_at(self.player.tile_x, self.player.tile_y)
+        if event and event['type'] in ['stairs_up', 'stairs_down', 'door']:
+            # マップ遷移
+            self.transition_to_map(
+                event['destination'],
+                event['dest_x'],
+                event['dest_y']
+            )
+
+    def transition_to_map(self, map_path, dest_x, dest_y):
+        """
+        別のマップに遷移
+
+        Args:
+            map_path: 遷移先のマップファイル名
+            dest_x: 遷移先のX座標（タイル単位）
+            dest_y: 遷移先のY座標（タイル単位）
+        """
+        import os
+        full_path = os.path.join('data/maps', map_path)
+
+        # 新しいマップを読み込み
+        self.tilemap = TileMap(full_path)
+
+        # プレイヤーを指定位置に配置
+        self.player.tile_x = dest_x
+        self.player.tile_y = dest_y
+        self.player.x = dest_x * TILE_SIZE
+        self.player.y = dest_y * TILE_SIZE
+        self.player.moving = False
+
+        # カメラを更新
+        self.update_camera()
+
+        # 初回イベントフラグをリセット（マップごとのイベント用）
+        # ただし、入社式は1回のみなのでリセットしない
+        # 必要に応じてマップ固有のイベントフラグを管理
 
     def check_encounter(self):
         """エンカウント判定"""

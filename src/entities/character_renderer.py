@@ -11,15 +11,16 @@ class CharacterRenderer:
     """キャラクター描画クラス"""
 
     @staticmethod
-    def draw_player(surface, x, y, direction='down'):
+    def draw_player(surface, x, y, direction='down', anim_frame=0):
         """
-        プレイヤーを描画（HD-2D風）
+        プレイヤーを描画（HD-2D風、アニメーション対応）
 
         Args:
             surface: 描画先サーフェス
             x: X座標
             y: Y座標
             direction: 向き ('up', 'down', 'left', 'right')
+            anim_frame: アニメーションフレーム (0-3)
         """
         # キャラクターサイズ
         char_width = TILE_SIZE
@@ -30,52 +31,73 @@ class CharacterRenderer:
         pygame.draw.ellipse(shadow, (0, 0, 0, 100), (0, 0, char_width, 8))
         surface.blit(shadow, (x, y + char_height - 8))
 
+        # 歩行アニメーション用のオフセット計算
+        # 0: 中央, 1: 左足前, 2: 中央, 3: 右足前
+        if anim_frame == 0 or anim_frame == 2:
+            left_leg_offset = 0
+            right_leg_offset = 0
+            body_y_offset = 0
+        elif anim_frame == 1:
+            left_leg_offset = -2
+            right_leg_offset = 2
+            body_y_offset = -1
+        else:  # anim_frame == 3
+            left_leg_offset = 2
+            right_leg_offset = -2
+            body_y_offset = -1
+
         # 本体を描画（スーツ姿の営業マン風）
         # 顔
         pygame.draw.ellipse(surface, (255, 220, 180),
-                           (x + 18, y + 12, 28, 28))  # 肌色の顔
+                           (x + 18, y + 12 + body_y_offset, 28, 28))  # 肌色の顔
 
         # 髪
         pygame.draw.ellipse(surface, (40, 30, 20),
-                           (x + 16, y + 8, 32, 20))  # 黒髪
+                           (x + 16, y + 8 + body_y_offset, 32, 20))  # 黒髪
 
         # 目
         if direction == 'down':
-            pygame.draw.circle(surface, (20, 20, 20), (x + 26, y + 22), 3)
-            pygame.draw.circle(surface, (20, 20, 20), (x + 38, y + 22), 3)
+            pygame.draw.circle(surface, (20, 20, 20), (x + 26, y + 22 + body_y_offset), 3)
+            pygame.draw.circle(surface, (20, 20, 20), (x + 38, y + 22 + body_y_offset), 3)
         elif direction == 'left':
-            pygame.draw.circle(surface, (20, 20, 20), (x + 22, y + 22), 3)
-            pygame.draw.circle(surface, (20, 20, 20), (x + 34, y + 22), 3)
+            pygame.draw.circle(surface, (20, 20, 20), (x + 22, y + 22 + body_y_offset), 3)
+            pygame.draw.circle(surface, (20, 20, 20), (x + 34, y + 22 + body_y_offset), 3)
         elif direction == 'right':
-            pygame.draw.circle(surface, (20, 20, 20), (x + 30, y + 22), 3)
-            pygame.draw.circle(surface, (20, 20, 20), (x + 42, y + 22), 3)
+            pygame.draw.circle(surface, (20, 20, 20), (x + 30, y + 22 + body_y_offset), 3)
+            pygame.draw.circle(surface, (20, 20, 20), (x + 42, y + 22 + body_y_offset), 3)
         else:  # up
-            pygame.draw.line(surface, (20, 20, 20), (x + 24, y + 22), (x + 28, y + 22), 2)
-            pygame.draw.line(surface, (20, 20, 20), (x + 36, y + 22), (x + 40, y + 22), 2)
+            pygame.draw.line(surface, (20, 20, 20), (x + 24, y + 22 + body_y_offset), (x + 28, y + 22 + body_y_offset), 2)
+            pygame.draw.line(surface, (20, 20, 20), (x + 36, y + 22 + body_y_offset), (x + 40, y + 22 + body_y_offset), 2)
 
         # スーツ（紺色）
         pygame.draw.rect(surface, (30, 40, 80),
-                        (x + 16, y + 36, 32, 24))  # 胴体
+                        (x + 16, y + 36 + body_y_offset, 32, 24))  # 胴体
 
         # ネクタイ（赤）
         pygame.draw.rect(surface, (200, 30, 30),
-                        (x + 30, y + 38, 4, 18))
+                        (x + 30, y + 38 + body_y_offset, 4, 18))
 
-        # 腕
+        # 腕（歩行時に少し揺らす）
+        arm_swing = 0
+        if anim_frame == 1:
+            arm_swing = 2
+        elif anim_frame == 3:
+            arm_swing = -2
+
         pygame.draw.rect(surface, (30, 40, 80),
-                        (x + 10, y + 38, 8, 20))  # 左腕
+                        (x + 10, y + 38 + body_y_offset + arm_swing, 8, 20))  # 左腕
         pygame.draw.rect(surface, (30, 40, 80),
-                        (x + 46, y + 38, 8, 20))  # 右腕
+                        (x + 46, y + 38 + body_y_offset - arm_swing, 8, 20))  # 右腕
 
         # 手
-        pygame.draw.circle(surface, (255, 220, 180), (x + 14, y + 54), 4)
-        pygame.draw.circle(surface, (255, 220, 180), (x + 50, y + 54), 4)
+        pygame.draw.circle(surface, (255, 220, 180), (x + 14, y + 54 + body_y_offset + arm_swing), 4)
+        pygame.draw.circle(surface, (255, 220, 180), (x + 50, y + 54 + body_y_offset - arm_swing), 4)
 
-        # 脚（スーツのズボン）
+        # 脚（スーツのズボン、歩行アニメーション）
         pygame.draw.rect(surface, (20, 30, 60),
-                        (x + 20, y + 56, 10, 8))  # 左脚
+                        (x + 20 + left_leg_offset, y + 56, 10, 8))  # 左脚
         pygame.draw.rect(surface, (20, 30, 60),
-                        (x + 34, y + 56, 10, 8))  # 右脚
+                        (x + 34 + right_leg_offset, y + 56, 10, 8))  # 右脚
 
     @staticmethod
     def draw_npc(surface, x, y, npc_type='staff'):

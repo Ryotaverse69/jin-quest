@@ -34,6 +34,11 @@ class Player(pygame.sprite.Sprite):
         self.moving = False
         self.move_progress = 0  # 移動アニメーション進捗
 
+        # アニメーション関連
+        self.anim_frame = 0  # アニメーションフレーム (0-3)
+        self.anim_counter = 0  # アニメーションカウンター
+        self.anim_speed = 8  # アニメーション速度（数値が小さいほど速い）
+
         # プレイヤー情報
         self.player_class = player_class
         self.name = "主人公"
@@ -134,6 +139,12 @@ class Player(pygame.sprite.Sprite):
         if self.moving:
             self.move_progress += self.speed
 
+            # 歩行アニメーション更新
+            self.anim_counter += 1
+            if self.anim_counter >= self.anim_speed:
+                self.anim_counter = 0
+                self.anim_frame = (self.anim_frame + 1) % 4
+
             # 移動完了
             if self.move_progress >= TILE_SIZE:
                 self.tile_x = self.target_tile_x
@@ -142,6 +153,7 @@ class Player(pygame.sprite.Sprite):
                 self.y = self.tile_y * TILE_SIZE
                 self.moving = False
                 self.move_progress = 0
+                self.anim_frame = 0  # 停止時は基本姿勢
             else:
                 # 移動アニメーション
                 if self.direction == 'up':
@@ -152,6 +164,9 @@ class Player(pygame.sprite.Sprite):
                     self.x = self.tile_x * TILE_SIZE - self.move_progress
                 elif self.direction == 'right':
                     self.x = self.tile_x * TILE_SIZE + self.move_progress
+        else:
+            # 停止中はアニメーションフレームを0に
+            self.anim_frame = 0
 
         # スプライトを更新
         self.image = self.create_placeholder_sprite()
@@ -186,7 +201,7 @@ class Player(pygame.sprite.Sprite):
 
     def draw(self, surface, camera_x=0, camera_y=0):
         """
-        プレイヤーを描画（HD-2D風）
+        プレイヤーを描画（HD-2D風、アニメーション対応）
 
         Args:
             surface: 描画先サーフェス
@@ -197,4 +212,4 @@ class Player(pygame.sprite.Sprite):
 
         draw_x = self.x - camera_x
         draw_y = self.y - camera_y
-        CharacterRenderer.draw_player(surface, draw_x, draw_y, self.direction)
+        CharacterRenderer.draw_player(surface, draw_x, draw_y, self.direction, self.anim_frame)
