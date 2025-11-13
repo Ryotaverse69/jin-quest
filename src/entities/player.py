@@ -186,13 +186,15 @@ class Player(pygame.sprite.Sprite):
 
     def draw(self, surface, camera_x=0, camera_y=0):
         """
-        プレイヤーを描画
+        プレイヤーを描画（HD-2D風）
 
         Args:
             surface: 描画先サーフェス
             camera_x: カメラX座標
             camera_y: カメラY座標
         """
+        from src.entities.character_renderer import CharacterRenderer
+
         draw_x = self.x - camera_x
         draw_y = self.y - camera_y
-        surface.blit(self.image, (draw_x, draw_y))
+        CharacterRenderer.draw_player(surface, draw_x, draw_y, self.direction)

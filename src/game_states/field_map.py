@@ -354,19 +354,34 @@ class FieldMapState:
         self.menu_window.draw(surface, self.player)
 
     def draw_npcs(self, surface):
-        """NPCを描画"""
+        """NPCを描画（HD-2D風）"""
+        from src.entities.character_renderer import CharacterRenderer
+
         for npc_data in self.tilemap.npcs:
             npc_x = npc_data['x'] * TILE_SIZE - self.camera_x
             npc_y = npc_data['y'] * TILE_SIZE - self.camera_y
 
-            # 仮：NPCを黄色い四角で表示
-            pygame.draw.rect(surface, COLORS['GOLD'],
-                           (npc_x, npc_y, TILE_SIZE, TILE_SIZE))
+            # NPCのタイプを判定
+            npc_name = npc_data['name']
+            if '会長' in npc_name:
+                npc_type = 'chairman'
+            elif '社長' in npc_name:
+                npc_type = 'president'
+            elif 'ポメ吉' in npc_name:
+                npc_type = 'dog'
+            else:
+                npc_type = 'staff'
 
-            # 名前を表示
+            # HD-2D風キャラクターを描画
+            CharacterRenderer.draw_npc(surface, npc_x, npc_y, npc_type)
+
+            # 名前を表示（影付き）
+            name_shadow = self.font.render(npc_data['name'], True, (0, 0, 0))
             name_surface = self.font.render(npc_data['name'], True, COLORS['WHITE'])
-            name_rect = name_surface.get_rect(center=(npc_x + TILE_SIZE // 2, npc_y - 5))
-            surface.blit(name_surface, name_rect)
+            name_x = npc_x + TILE_SIZE // 2 - name_surface.get_width() // 2
+            name_y = npc_y - 10
+            surface.blit(name_shadow, (name_x + 2, name_y + 2))
+            surface.blit(name_surface, (name_x, name_y))
 
     def draw_ui(self, surface):
         """UI情報を描画"""

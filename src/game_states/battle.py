@@ -149,23 +149,52 @@ class BattleState:
             surface.blit(fade_surface, (0, 0))
             return
 
-        # 敵の描画
+        # 敵の描画（HD-2D風）
         if self.enemy.is_alive:
-            enemy_sprite = self.enemy.create_sprite()
-            enemy_x = SCREEN_WIDTH // 2 - 16
-            enemy_y = 50
-            surface.blit(enemy_sprite, (enemy_x, enemy_y))
+            from src.entities.character_renderer import CharacterRenderer
 
-            # 敵の名前
+            # 敵を中央やや上に大きく描画
+            enemy_x = SCREEN_WIDTH // 2 - TILE_SIZE
+            enemy_y = 150
+
+            # 敵キャラクターを描画
+            CharacterRenderer.draw_enemy(surface, enemy_x, enemy_y, self.enemy.name)
+
+            # 敵の名前（影付き）
+            name_shadow = self.font.render(self.enemy.name, True, (0, 0, 0))
             name_surface = self.font.render(self.enemy.name, True, COLORS['WHITE'])
-            name_rect = name_surface.get_rect(center=(SCREEN_WIDTH // 2, 30))
+            name_rect = name_surface.get_rect(center=(SCREEN_WIDTH // 2, 100))
+            surface.blit(name_shadow, (name_rect.x + 3, name_rect.y + 3))
             surface.blit(name_surface, name_rect)
 
-            # 敵のHP
+            # 敵のHP（ゲージ風）
             hp_text = f"HP: {self.enemy.hp}/{self.enemy.max_hp}"
             hp_surface = self.font.render(hp_text, True, COLORS['GOLD'])
-            hp_rect = hp_surface.get_rect(center=(SCREEN_WIDTH // 2, 90))
+            hp_rect = hp_surface.get_rect(center=(SCREEN_WIDTH // 2, 400))
             surface.blit(hp_surface, hp_rect)
+
+            # HPゲージ
+            gauge_width = 300
+            gauge_height = 20
+            gauge_x = SCREEN_WIDTH // 2 - gauge_width // 2
+            gauge_y = 430
+            hp_ratio = self.enemy.hp / self.enemy.max_hp
+
+            # ゲージ背景
+            pygame.draw.rect(surface, COLORS['DARK_BLUE'],
+                           (gauge_x, gauge_y, gauge_width, gauge_height))
+            # ゲージ（HP）
+            if hp_ratio > 0.5:
+                gauge_color = (50, 200, 50)
+            elif hp_ratio > 0.25:
+                gauge_color = (255, 200, 0)
+            else:
+                gauge_color = (255, 50, 50)
+            pygame.draw.rect(surface, gauge_color,
+                           (gauge_x, gauge_y, int(gauge_width * hp_ratio), gauge_height))
+            # ゲージ枠
+            pygame.draw.rect(surface, COLORS['WHITE'],
+                           (gauge_x, gauge_y, gauge_width, gauge_height), 2)
 
         # プレイヤー情報（下部）
         self.draw_player_status(surface)
