@@ -5,6 +5,7 @@ JID×QUEST - タイルマップシステム
 import pygame
 import json
 from config import *
+from src.utils.tile_renderer import TileRenderer
 
 
 class TileMap:
@@ -56,7 +57,7 @@ class TileMap:
 
     def draw(self, surface, camera_x=0, camera_y=0):
         """
-        マップを描画
+        マップを描画（HD-2D風）
 
         Args:
             surface: 描画先サーフェス
@@ -72,16 +73,13 @@ class TileMap:
         for row in range(start_row, end_row):
             for col in range(start_col, end_col):
                 tile_id = self.tiles[row][col]
-                color = self.get_tile_color(tile_id)
 
                 # タイルの描画位置を計算
                 x = col * TILE_SIZE - camera_x
                 y = row * TILE_SIZE - camera_y
 
-                pygame.draw.rect(surface, color, (x, y, TILE_SIZE, TILE_SIZE))
-
-                # グリッド線（デバッグ用）
-                pygame.draw.rect(surface, (100, 100, 100), (x, y, TILE_SIZE, TILE_SIZE), 1)
+                # HD-2D風タイル描画
+                TileRenderer.draw_tile(surface, x, y, tile_id)
 
     def is_walkable(self, tile_x, tile_y):
         """

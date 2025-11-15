@@ -281,12 +281,57 @@ class FieldMapState:
         was_moving = self.player.moving
         self.player.update()
 
-        # 移動完了時にエンカウント判定
-        if was_moving and not self.player.moving and self.encounter_enabled:
-            self.check_encounter()
+        # 移動完了時の処理
+        if was_moving and not self.player.moving:
+            # マップ遷移イベントをチェック
+            self.check_map_transition()
+
+            # エンカウント判定
+            if self.encounter_enabled:
+                self.check_encounter()
 
         # カメラをプレイヤーに追従
         self.update_camera()
+
+    def check_map_transition(self):
+        """マップ遷移イベントをチェック"""
+        event = self.tilemap.get_event_at(self.player.tile_x, self.player.tile_y)
+        if event and event['type'] in ['stairs_up', 'stairs_down', 'door']:
+            # マップ遷移
+            self.transition_to_map(
+                event['destination'],
+                event['dest_x'],
+                event['dest_y']
+            )
+
+    def transition_to_map(self, map_path, dest_x, dest_y):
+        """
+        別のマップに遷移
+
+        Args:
+            map_path: 遷移先のマップファイル名
+            dest_x: 遷移先のX座標（タイル単位）
+            dest_y: 遷移先のY座標（タイル単位）
+        """
+        import os
+        full_path = os.path.join('data/maps', map_path)
+
+        # 新しいマップを読み込み
+        self.tilemap = TileMap(full_path)
+
+        # プレイヤーを指定位置に配置
+        self.player.tile_x = dest_x
+        self.player.tile_y = dest_y
+        self.player.x = dest_x * TILE_SIZE
+        self.player.y = dest_y * TILE_SIZE
+        self.player.moving = False
+
+        # カメラを更新
+        self.update_camera()
+
+        # 初回イベントフラグをリセット（マップごとのイベント用）
+        # ただし、入社式は1回のみなのでリセットしない
+        # 必要に応じてマップ固有のイベントフラグを管理
 
     def check_encounter(self):
         """エンカウント判定"""
@@ -354,19 +399,34 @@ class FieldMapState:
         self.menu_window.draw(surface, self.player)
 
     def draw_npcs(self, surface):
-        """NPCを描画"""
+        """NPCを描画（HD-2D風）"""
+        from src.entities.character_renderer import CharacterRenderer
+
         for npc_data in self.tilemap.npcs:
             npc_x = npc_data['x'] * TILE_SIZE - self.camera_x
             npc_y = npc_data['y'] * TILE_SIZE - self.camera_y
 
-            # 仮：NPCを黄色い四角で表示
-            pygame.draw.rect(surface, COLORS['GOLD'],
-                           (npc_x, npc_y, TILE_SIZE, TILE_SIZE))
+            # NPCのタイプを判定
+            npc_name = npc_data['name']
+            if '会長' in npc_name:
+                npc_type = 'chairman'
+            elif '社長' in npc_name:
+                npc_type = 'president'
+            elif 'ポメ吉' in npc_name:
+                npc_type = 'dog'
+            else:
+                npc_type = 'staff'
 
-            # 名前を表示
+            # HD-2D風キャラクターを描画
+            CharacterRenderer.draw_npc(surface, npc_x, npc_y, npc_type)
+
+            # 名前を表示（影付き）
+            name_shadow = self.font.render(npc_data['name'], True, (0, 0, 0))
             name_surface = self.font.render(npc_data['name'], True, COLORS['WHITE'])
-            name_rect = name_surface.get_rect(center=(npc_x + TILE_SIZE // 2, npc_y - 5))
-            surface.blit(name_surface, name_rect)
+            name_x = npc_x + TILE_SIZE // 2 - name_surface.get_width() // 2
+            name_y = npc_y - 10
+            surface.blit(name_shadow, (name_x + 2, name_y + 2))
+            surface.blit(name_surface, (name_x, name_y))
 
     def draw_ui(self, surface):
         """UI情報を描画"""
